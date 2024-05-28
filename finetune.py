@@ -15,7 +15,7 @@ bnb_config = BitsAndBytesConfig(
 )
 
 model = AutoModelForCausalLM.from_pretrained(
-    "tiiuae/falcon-7b-instruct",
+    "mistralai/Mistral-7B-Instruct-v0.2",
     quantization_config=bnb_config,
     device_map="auto",
 )
@@ -27,7 +27,7 @@ peft_config = LoraConfig(
     bias="none",
     task_type="CAUSAL_LM",
     target_modules=[
-        "query_key_value"
+       'k_proj', 'gate_proj', 'v_proj', 'up_proj', 'q_proj', 'o_proj', 'down_proj'
     ],
 )
 
@@ -39,8 +39,8 @@ tokenizer.pad_token = tokenizer.eos_token
 
 training_arguments = TrainingArguments(
     output_dir="./results_latest",
-    per_device_train_batch_size=8,
-    gradient_accumulation_steps=8,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=1,
     optim='paged_adamw_32bit',
     num_train_epochs=8,
     save_steps=20,
