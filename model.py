@@ -11,7 +11,6 @@ pipeline = transformers.pipeline(
     tokenizer=tokenizer,
     torch_dtype=torch.bfloat16,
     device_map="auto",
-    # device_map={"": 0},
 
 )
 sequences = pipeline(

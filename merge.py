@@ -14,11 +14,10 @@ bnb_config = BitsAndBytesConfig(
 )
 
 model = AutoModelForCausalLM.from_pretrained(
-    # "tiiuae/falcon-7b-instruct", device_map={"": 0}, quantization_config=bnb_config, trust_remote_code=True
     "mistralai/Mistral-7B-Instruct-v0.2", device_map='auto', quantization_config=bnb_config
 )
 
-model = PeftModel.from_pretrained(model, './output_dir_2')
+model = PeftModel.from_pretrained(model, './output_dir')
 
 tokenizer = AutoTokenizer.from_pretrained('mistralai/Mistral-7B-Instruct-v0.2')
 tokenizer.pad_token = tokenizer.eos_token

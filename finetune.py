@@ -18,8 +18,6 @@ model = AutoModelForCausalLM.from_pretrained(
     "tiiuae/falcon-7b-instruct",
     quantization_config=bnb_config,
     device_map="auto",
-    # device_map={"": 0},
-    # trust_remote_code=True
 )
 
 peft_config = LoraConfig(
@@ -36,37 +34,42 @@ peft_config = LoraConfig(
 model.config.use_cache = False
 model = get_peft_model(model, peft_config)
 
-# tokenizer = AutoTokenizer.from_pretrained("tiiuae/falcon-7b-instruct", trust_remote_code=True)
 tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2")
 tokenizer.pad_token = tokenizer.eos_token
 
 training_arguments = TrainingArguments(
-    output_dir="./results_latest_2",
-    per_device_train_batch_size=1,
-    gradient_accumulation_steps=4,
+    output_dir="./results_latest",
+    per_device_train_batch_size=8,
+    gradient_accumulation_steps=8,
     optim='paged_adamw_32bit',
+    num_train_epochs=8,
     save_steps=20,
     fp16=True,
     logging_steps=10,
     learning_rate=2e-4,
     max_grad_norm=0.3,
-    # max_steps=30000,
-    max_steps=300,
     warmup_ratio=0.03,
     lr_scheduler_type="constant",
 )
 
 dataset = load_dataset("gretelai/synthetic_text_to_sql", split="train")
 
+def formatting_prompts(example):
+    output_text = []
+    for i in range(len(example['sql_prompt'])):
+        text = f"### NL Question: {example['sql_prompt'][i]}\n ### Context: {example['sql_context'][i]}\n ### Answer: {example['sql'][i]}\n ### Explanation: {example['sql_explanation'][i]}"
+        output_text.append(text)
+    return output_text
+
+
 trainer = SFTTrainer(
     model=model,
     train_dataset=dataset,
     peft_config=peft_config,
-    dataset_text_field="text",
+    formatting_func=formatting_prompts,
     max_seq_length=512,
     tokenizer=tokenizer,
     args=training_arguments,
-    packing=True,
 )
 
 for name, module in trainer.model.named_modules():
@@ -75,4 +78,4 @@ for name, module in trainer.model.named_modules():
 
 trainer.train()
 
-model.save_pretrained("output_dir_2")
+model.save_pretrained("output_dir")
